@@ -1,7 +1,6 @@
 package fr.lernejo.fileinjector;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,18 +14,22 @@ import java.util.List;
 
 @SpringBootApplication
 public class Launcher {
+
     public static void main(String[] args) throws IOException {
         try (AbstractApplicationContext springContext = new AnnotationConfigApplicationContext(Launcher.class)) {
-
-            if (args.length > 0 && args[0] != "") {
-                ObjectMapper map = new ObjectMapper();
-                List<Game> games = Arrays.asList(map.readValue(Paths.get(args[0]).toFile(), Game[].class));
-                RabbitTemplate template = springContext.getBean(RabbitTemplate.class);
-                for (Game game : games) {
-                    template.setMessageConverter(new Jackson2JsonMessageConverter());
-                    template.convertAndSend("", "game_info", game,m -> { m.getMessageProperties().getHeaders().put("game_id", game.id());return m; });
+            if (args.length > 0){
+                ObjectMapper mapper = new ObjectMapper();
+                List<GameInfo> gameInfos = Arrays.asList(mapper.readValue(Paths.get(args[0]).toFile(), GameInfo[].class));
+                RabbitTemplate rabbitTemplate = springContext.getBean(RabbitTemplate.class);
+                for (GameInfo gameInfo : gameInfos) {
+                    rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
+                    rabbitTemplate.convertAndSend("", "game_info", gameInfo, message -> {message.getMessageProperties().getHeaders().put("game_id", gameInfo.id());
+                        return message;
+                    });
                 }
-            } else { throw new IOException("No parameters passed!"); }
-        } catch (IOException e) { throw new IOException(e); }
+            }
+        } catch (IOException err) {
+            throw new IOException(err);
+        }
     }
 }

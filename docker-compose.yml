@@ -3,7 +3,7 @@ services:
     rabbitmq:
         # https://hub.docker.com/_/rabbitmq
         image: rabbitmq:3.9.13-management-alpine
-        container_name: rabbitmqvg
+        container_name: rabbitmq
         ports:
             - 5672:5672 # AMQP
             - 15672:15672 # HTTP (Management)
